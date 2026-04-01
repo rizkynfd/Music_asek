@@ -3,6 +3,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { CheckCircle, XCircle } from 'phosphor-react';
 import { fetchSyncedLyrics } from '../services/lrclib';
 import { useNavigate } from 'react-router-dom';
+import BackgroundVideo from './BackgroundVideo';
 
 export default function RightSidebar() {
     const { currentSong, isRightSidebarOpen, isPlaying, currentTime } = usePlayerStore();
@@ -42,7 +43,7 @@ export default function RightSidebar() {
     }
 
     return (
-        <aside className="right-sidebar glass-panel">
+        <aside className="right-sidebar glass-panel" style={{ width: 'var(--right-sidebar-width)', minWidth: 'var(--right-sidebar-width)' }}>
             <div className="now-playing-header">
                 <h4>Now Playing</h4>
                 <button className="close-btn" onClick={() => usePlayerStore.getState().toggleRightSidebar()}>
@@ -56,13 +57,24 @@ export default function RightSidebar() {
                 </div>
             </div>
 
-            <div className="now-playing-info">
+            <div className="now-playing-info" style={{ marginBottom: '20px' }}>
                 <div className="title-row">
                     <div style={{ maxWidth: '85%' }}>
-                        <h2 className="song-title text-ellipsis">{currentSong.title}</h2>
-                        <p className="artist-name text-ellipsis">{currentSong.artist}</p>
+                        <h2 className="song-title text-ellipsis" style={{ fontSize: '24px', fontWeight: '800' }}>{currentSong.title}</h2>
+                        <p className="artist-name text-ellipsis" style={{ fontSize: '16px', opacity: 0.7 }}>{currentSong.artist}</p>
                     </div>
                     <CheckCircle size={24} color="var(--accent-color)" weight="fill" />
+                </div>
+            </div>
+
+            {/* Video Clip Section */}
+            <div className="rs-video-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <p className="rs-lyrics-label" style={{ margin: 0 }}>Official Video</p>
+                    <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>PREVIEW</span>
+                </div>
+                <div className="rs-video-container">
+                    <BackgroundVideo isSharp={true} />
                 </div>
             </div>
 
@@ -85,6 +97,45 @@ export default function RightSidebar() {
             </div>
 
             <style>{`
+                .right-sidebar {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 20px;
+                    overflow-y: auto;
+                    height: 100%;
+                }
+                .now-playing-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                }
+                .now-playing-art {
+                    display: flex;
+                    justify-content: center;
+                    margin-bottom: 24px;
+                }
+                .vinyl-wrapper {
+                    width: 100%;
+                    max-width: 240px; /* Cap size on large sidebars */
+                    aspect-ratio: 1/1;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    border: 4px solid rgba(255,255,255,0.05);
+                }
+                .vinyl-wrapper img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .spinning {
+                    animation: spin 20s linear infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
                 .rs-lyrics-preview {
                     margin: 0 0 16px;
                     padding: 14px 16px;
@@ -116,6 +167,24 @@ export default function RightSidebar() {
                     font-size: 13px;
                     color: var(--text-secondary);
                     line-height: 1.4;
+                }
+                .rs-video-section {
+                    margin-bottom: 24px;
+                    flex-shrink: 0;
+                }
+                .rs-video-container {
+                    width: 100%;
+                    aspect-ratio: 16 / 9;
+                    background: rgba(0,0,0,0.2);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid rgba(255,255,255,0.05);
+                    position: relative;
+                    box-shadow: inset 0 4px 12px rgba(0,0,0,0.2);
+                }
+                .about-artist {
+                    padding: 16px;
+                    margin-bottom: 20px;
                 }
             `}</style>
         </aside>

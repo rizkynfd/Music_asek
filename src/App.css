@@ -11,8 +11,28 @@
 .main-wrapper {
   display: flex;
   flex: 1;
-  gap: 16px;
+  gap: 12px;
   height: calc(100vh - var(--bottom-player-height) - 48px);
+  position: relative;
+}
+
+.resize-handle {
+  width: 4px;
+  margin: 0 -8px;
+  cursor: col-resize;
+  z-index: 100;
+  transition: background 0.15s, box-shadow 0.15s;
+  border-radius: 4px;
+}
+
+.resize-handle:hover,
+.resize-handle.active {
+  background: var(--accent-color);
+  box-shadow: 0 0 12px var(--accent-color);
+}
+
+.resizing {
+  cursor: col-resize !important;
 }
 
 .center-content {

@@ -22,7 +22,7 @@ export default function LeftSidebar() {
     };
 
     return (
-        <aside className="left-sidebar glass-panel">
+        <aside className="left-sidebar glass-panel" style={{ width: 'var(--left-sidebar-width)', minWidth: 'var(--left-sidebar-width)' }}>
             <div className="nav-container glass-panel">
                 <div className="nav-links">
                     <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>

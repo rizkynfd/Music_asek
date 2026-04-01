@@ -7,6 +7,7 @@ import {
 } from 'phosphor-react';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import Visualizer from './Visualizer';
 
 export default function BottomPlayer() {
     const {
@@ -69,7 +70,14 @@ export default function BottomPlayer() {
                 
                 primarySourceRef.current = audioCtxRef.current.createMediaElementSource(audioRef.current);
                 
-                primarySourceRef.current.connect(compressorRef.current);
+                // Audio analyser for visualizer
+                const newAnalyser = audioCtxRef.current.createAnalyser();
+                newAnalyser.fftSize = 128;
+                newAnalyser.smoothingTimeConstant = 0.75;
+                usePlayerStore.getState().setAnalyser(newAnalyser);
+                
+                primarySourceRef.current.connect(newAnalyser);
+                newAnalyser.connect(compressorRef.current);
                 compressorRef.current.connect(gainNodeRef.current);
                 gainNodeRef.current.connect(audioCtxRef.current.destination);
             } catch (err) {
@@ -419,6 +427,9 @@ export default function BottomPlayer() {
 
             {/* 2. Main Controls (Center) */}
             <div className="player-center">
+                <div style={{ height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', marginBottom: '4px' }}>
+                    <Visualizer width={200} height={20} />
+                </div>
                 <div className="player-controls">
                     <button className={`control-btn ${isShuffle ? 'active-btn' : ''}`} onClick={toggleShuffle}>
                         <Shuffle size={20} />

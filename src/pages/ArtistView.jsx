@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Play, Pause, Clock, Heart, Check } from 'phosphor-react';
 import { useParams, Link } from 'react-router-dom';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { fetchArtistInfo } from '../services/lastfm';
 
 export default function ArtistView() {
     const { artistName } = useParams();
@@ -21,6 +22,21 @@ export default function ArtistView() {
         followedArtists,
         toggleFollowArtist
     } = usePlayerStore();
+
+    const [artistInfo, setArtistInfo] = useState(null);
+    const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        setArtistInfo(null);
+        setIsBioExpanded(false);
+        fetchArtistInfo(decodedArtistName).then(info => {
+            if (isMounted && info) {
+                setArtistInfo(info);
+            }
+        });
+        return () => { isMounted = false; };
+    }, [decodedArtistName]);
 
     // Filter songs by this exact artist name
     const artistTracks = useMemo(() => {
@@ -157,6 +173,31 @@ export default function ArtistView() {
                     </button>
                 </div>
 
+                {/* Artist Bio */}
+                {artistInfo && artistInfo.bio && (
+                    <div style={{ marginTop: '32px', marginBottom: '32px', maxWidth: '800px', padding: '24px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>About {decodedArtistName}</h2>
+                        <div 
+                            style={{ 
+                                fontSize: '14px', 
+                                color: 'var(--text-secondary)', 
+                                lineHeight: '1.6',
+                                overflow: 'hidden',
+                                display: '-webkit-box',
+                                WebkitLineClamp: isBioExpanded ? 'unset' : '4',
+                                WebkitBoxOrient: 'vertical'
+                            }}
+                            dangerouslySetInnerHTML={{ __html: artistInfo.bio.replace(/<a /g, '<a style="color:var(--accent-color)" target="_blank" ') }}
+                        />
+                        <button 
+                            onClick={() => setIsBioExpanded(!isBioExpanded)}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontWeight: 'bold', cursor: 'pointer', padding: '8px 0', marginTop: '8px' }}
+                        >
+                            {isBioExpanded ? 'Show less' : 'Read more'}
+                        </button>
+                    </div>
+                )}
+
                 {/* Popular Tracks */}
                 <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Popular Releases</h2>
                 <table className="song-list-table">
@@ -240,6 +281,34 @@ export default function ArtistView() {
                         })}
                     </tbody>
                 </table>
+
+                {/* Similar Artists */}
+                {artistInfo && artistInfo.similar && artistInfo.similar.length > 0 && (
+                    <div style={{ marginTop: '48px', paddingBottom: '32px' }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Fans Also Like</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '24px' }}>
+                            {artistInfo.similar.slice(0, 6).map((similarArtist, i) => (
+                                <Link to={`/artist/${encodeURIComponent(similarArtist.name)}`} key={i} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', transition: 'background 0.3s' }} className="hover-bg-elevated">
+                                        <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', marginBottom: '16px', background: 'var(--bg-elevated)' }}>
+                                            {similarArtist.image ? (
+                                                <img src={similarArtist.image} alt={similarArtist.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <span style={{ fontSize: '40px', color: 'rgba(255,255,255,0.1)' }}>?</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 style={{ fontSize: '14px', fontWeight: 'bold', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                                            {similarArtist.name}
+                                        </h3>
+                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Artist</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

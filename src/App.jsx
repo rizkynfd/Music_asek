@@ -85,15 +85,65 @@ function App() {
 
 
 function PlayerLayout() {
-  const { toast } = usePlayerStore();
+  const { 
+    toast,
+    leftSidebarWidth, setLeftSidebarWidth, 
+    rightSidebarWidth, setRightSidebarWidth,
+    isRightSidebarOpen 
+  } = usePlayerStore();
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
 
+  const [isResizingLeft, setIsResizingLeft] = React.useState(false);
+  const [isResizingRight, setIsResizingRight] = React.useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isResizingLeft) {
+        const newWidth = Math.max(200, Math.min(500, e.clientX - 16)); 
+        setLeftSidebarWidth(newWidth);
+      }
+      if (isResizingRight) {
+        const newWidth = Math.max(280, Math.min(600, window.innerWidth - e.clientX - 32));
+        setRightSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingLeft(false);
+      setIsResizingRight(false);
+      document.body.style.cursor = 'default';
+    };
+
+    if (isResizingLeft || isResizingRight) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.body.classList.add('resizing');
+    } else {
+      document.body.classList.remove('resizing');
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'auto';
+    };
+  }, [isResizingLeft, isResizingRight, setLeftSidebarWidth, setRightSidebarWidth]);
+
   return (
     <div className="app-container">
-      <div className="main-wrapper">
+      <div className="main-wrapper" style={{ 
+        '--left-sidebar-width': `${leftSidebarWidth}px`,
+        '--right-sidebar-width': `${rightSidebarWidth}px`
+      }}>
         <LeftSidebar />
+        <div 
+          className={`resize-handle left-handle ${isResizingLeft ? 'active' : ''}`}
+          onMouseDown={() => setIsResizingLeft(true)}
+        ></div>
 
         <div className="center-content">
           <Topbar />
@@ -120,6 +170,12 @@ function PlayerLayout() {
           </main>
         </div>
 
+        {isRightSidebarOpen && (
+          <div 
+            className={`resize-handle right-handle ${isResizingRight ? 'active' : ''}`}
+            onMouseDown={() => setIsResizingRight(true)}
+          ></div>
+        )}
         <RightSidebar />
       </div>
       <BottomPlayer />

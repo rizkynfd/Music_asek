@@ -120,11 +120,9 @@ export async function fetchSyncedLyrics({ title, artist, album, duration }) {
         }
     } catch { /* continue */ }
 
-    // ── Attempt 3: GET /api/search (keyword search, take first synced result) ──
+    // ── Attempt 3: GET /api/search (keyword search, true fuzzy match) ──
     try {
         const params = new URLSearchParams({
-            track_name: title,
-            artist_name: artist,
             q: `${artist} ${title}`,
         });
         const res = await fetch(`${LRCLIB_BASE}/search?${params}`);
@@ -136,6 +134,39 @@ export async function fetchSyncedLyrics({ title, artist, album, duration }) {
                 const best   = synced || results[0];
                 const result = extractLyricsFromResponse(best);
                 if (result) {
+                    lyricsCache.set(cacheKey, result);
+                    return result;
+                }
+            }
+        }
+    } catch { /* continue */ }
+
+    // ── Attempt 4: Fallback to Lyrics.ovh API (Plain Text) with typo tolerance ──
+    try {
+        let ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+        
+        // If 404, try fuzzy searching OVH for the correct spelling
+        if (!ovhRes.ok && ovhRes.status === 404) {
+            const suggestRes = await fetch(`https://api.lyrics.ovh/suggest/${encodeURIComponent(artist + ' ' + title)}`);
+            if (suggestRes.ok) {
+                const suggestData = await suggestRes.json();
+                if (suggestData.data && suggestData.data.length > 0) {
+                    const bestMatch = suggestData.data[0];
+                    ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(bestMatch.artist.name)}/${encodeURIComponent(bestMatch.title)}`);
+                }
+            }
+        }
+
+        if (ovhRes.ok) {
+            const data = await ovhRes.json();
+            if (data && data.lyrics) {
+                const plain = data.lyrics
+                    .split('\n')
+                    .filter(l => l.trim() && !l.includes('Paroles de la chanson'))
+                    .map((text, i) => ({ time: i * 4, text }));
+                
+                if (plain.length > 0) {
+                    const result = { lines: plain, type: 'plain' };
                     lyricsCache.set(cacheKey, result);
                     return result;
                 }
