@@ -20,7 +20,7 @@ export default function AdminLayout() {
             {/* Admin Sidebar */}
             <aside style={{ width: '250px', background: 'var(--bg-elevated)', borderRight: '1px solid var(--bg-glass-border)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '24px' }}>
-                    <h2 style={{ color: 'var(--accent-color)', margin: 0 }}>Spotify Wanna Be Admin</h2>
+                    <h2 style={{ color: 'var(--accent-color)', margin: 0 }}>Musik Asek Admin</h2>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Content Management</p>
                 </div>
 

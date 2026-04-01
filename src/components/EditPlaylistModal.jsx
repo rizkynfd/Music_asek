@@ -154,7 +154,7 @@ export default function EditPlaylistModal() {
                     </div>
 
                     <p className="epm-disclaimer">
-                        By proceeding, you agree to give SpotiClone access to the image you choose to upload.
+                        By proceeding, you agree to give Musik Asek access to the image you choose to upload.
                         Please make sure you have the right to upload the image.
                     </p>
                 </form>

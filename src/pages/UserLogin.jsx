@@ -55,10 +55,10 @@ export default function UserLogin() {
                 {/* Logo */}
                 <div className="auth-logo">
                     <MusicNote size={32} weight="fill" color="var(--accent-color)" />
-                    <span className="auth-logo-text">SpotiClone</span>
+                    <span className="auth-logo-text">Musik Asek</span>
                 </div>
 
-                <h1 className="auth-title">Log in to SpotiClone</h1>
+                <h1 className="auth-title">Log in to Musik Asek</h1>
                 <p className="auth-subtitle">Millions of songs. Free to explore.</p>
 
                 <form onSubmit={handleLogin} className="auth-form">

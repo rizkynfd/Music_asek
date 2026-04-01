@@ -53,7 +53,7 @@ export default function UserRegister() {
                 {/* Logo */}
                 <div className="auth-logo">
                     <MusicNote size={32} weight="fill" color="var(--accent-color)" />
-                    <span className="auth-logo-text">SpotiClone</span>
+                    <span className="auth-logo-text">Musik Asek</span>
                 </div>
 
                 <h1 className="auth-title">Create your account</h1>

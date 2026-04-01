@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CaretLeft, CaretRight, User, Bell, Users, SignOut, ShieldCheck, UserCircle } from 'phosphor-react';
+import { CaretLeft, CaretRight, User, Bell, Users, SignOut, ShieldCheck, UserCircle, List } from 'phosphor-react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAuthStore } from '../store/useAuthStore';
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }) {
     const navigate = useNavigate();
     const { showToast, isAdminAuthenticated } = usePlayerStore();
     const { currentUser, isAuthenticated, logout } = useAuthStore();
@@ -39,8 +39,11 @@ export default function Topbar() {
     return (
         <header className="topbar">
             <div className="nav-arrows">
-                <button className="arrow-btn" onClick={() => navigate(-1)}><CaretLeft size={24} /></button>
-                <button className="arrow-btn" onClick={() => navigate(1)}><CaretRight size={24} /></button>
+                <button className="mobile-menu-btn" onClick={onMenuClick}>
+                    <List size={24} />
+                </button>
+                <button className="arrow-btn hidden-mobile" onClick={() => navigate(-1)}><CaretLeft size={24} /></button>
+                <button className="arrow-btn hidden-mobile" onClick={() => navigate(1)}><CaretRight size={24} /></button>
             </div>
 
             <div className="topbar-actions" style={{ position: 'relative' }}>

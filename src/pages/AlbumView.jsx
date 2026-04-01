@@ -224,8 +224,8 @@ export default function AlbumView() {
 
                 {/* Copyright info */}
                 <div style={{ marginTop: '32px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                    <p>© {releaseYear} SpotiClone Records</p>
-                    <p>℗ {releaseYear} SpotiClone Records</p>
+                    <p>© {releaseYear} Musik Asek Records</p>
+                    <p>℗ {releaseYear} Musik Asek Records</p>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 /**
- * API Service Layer — SpotiClone + Supabase
+ * API Service Layer — Musik Asek + Supabase
  *
  * Semua fungsi menggunakan Supabase sebagai backend.
  * Jika Supabase belum dikonfigurasi (VITE_SUPABASE_URL kosong),

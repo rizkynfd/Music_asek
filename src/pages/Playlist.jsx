@@ -102,7 +102,7 @@ export default function Playlist() {
                     </h1>
                     {playlist.desc && <p className="playlist-description">{playlist.desc}</p>}
                     <p className="playlist-stats">
-                        <strong>SpotiClone</strong> • {playlistSongs.length} {playlistSongs.length === 1 ? 'song' : 'songs'}
+                        <strong>Musik Asek</strong> • {playlistSongs.length} {playlistSongs.length === 1 ? 'song' : 'songs'}
                     </p>
                 </div>
             </div>

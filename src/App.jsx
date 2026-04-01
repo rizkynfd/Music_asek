@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Topbar from './components/Topbar';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
@@ -85,6 +85,7 @@ function App() {
 
 function PlayerLayout() {
   const { toast } = usePlayerStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
@@ -92,10 +93,10 @@ function PlayerLayout() {
   return (
     <div className="app-container">
       <div className="main-wrapper">
-        <LeftSidebar />
+        <LeftSidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
         <div className="center-content">
-          <Topbar />
+          <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
           <main className="main-view glass-panel scrollable">
             <ErrorBoundary>
               <Routes>
