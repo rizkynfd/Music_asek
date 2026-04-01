@@ -34,6 +34,55 @@ export default function BottomPlayer() {
     const progressBarRef = useRef(null);
     const volumeBarRef = useRef(null);
 
+    // --- Audio Normalizer Refs ---
+    const audioCtxRef = useRef(null);
+    const primarySourceRef = useRef(null);
+    const compressorRef = useRef(null);
+    const gainNodeRef = useRef(null);
+
+    useEffect(() => {
+        if (!audioRef.current) return;
+        
+        const initAudio = () => {
+            if (audioCtxRef.current) {
+                if (audioCtxRef.current.state === 'suspended') {
+                    audioCtxRef.current.resume();
+                }
+                return;
+            }
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                audioCtxRef.current = new AudioCtx();
+                
+                // Compressor normalizes the audio dynamically
+                compressorRef.current = audioCtxRef.current.createDynamicsCompressor();
+                compressorRef.current.threshold.value = -24;
+                compressorRef.current.knee.value = 30;
+                compressorRef.current.ratio.value = 12;
+                compressorRef.current.attack.value = 0.003;
+                compressorRef.current.release.value = 0.25;
+
+                // Gain handles volume since MediaElement volume is overridden
+                gainNodeRef.current = audioCtxRef.current.createGain();
+                gainNodeRef.current.gain.value = audioRef.current.volume || 1;
+                
+                primarySourceRef.current = audioCtxRef.current.createMediaElementSource(audioRef.current);
+                
+                primarySourceRef.current.connect(compressorRef.current);
+                compressorRef.current.connect(gainNodeRef.current);
+                gainNodeRef.current.connect(audioCtxRef.current.destination);
+            } catch (err) {
+                console.error('Audio normalizer initialization failed:', err);
+            }
+        };
+
+        const audioEl = audioRef.current;
+        audioEl.addEventListener('play', initAudio);
+        return () => {
+            audioEl.removeEventListener('play', initAudio);
+        };
+    }, []);
+
     // Sync play/pause with Zustand state
     useEffect(() => {
         if (audioRef.current) {
@@ -63,7 +112,10 @@ export default function BottomPlayer() {
         if (audioRef.current) {
             audioRef.current.volume = volume;
         }
-    }, [volume]);
+        if (gainNodeRef.current) {
+            gainNodeRef.current.gain.value = volume;
+        }
+    }, [volume, currentSong?.id]);
 
     // Global drag listeners
     useEffect(() => {
@@ -144,7 +196,11 @@ export default function BottomPlayer() {
 
             const fadeInterval = setInterval(() => {
                 if (audioRef.current && nextAudioRef.current) {
-                    audioRef.current.volume = Math.max(0, audioRef.current.volume - volumeStep);
+                    const newPrimaryVol = Math.max(0, audioRef.current.volume - volumeStep);
+                    audioRef.current.volume = newPrimaryVol;
+                    if (gainNodeRef.current) {
+                        gainNodeRef.current.gain.value = newPrimaryVol;
+                    }
                     nextAudioRef.current.volume = Math.min(volume, nextAudioRef.current.volume + volumeStep);
                 }
             }, interval);
