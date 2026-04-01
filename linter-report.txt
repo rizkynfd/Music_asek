@@ -1,0 +1,13 @@
+[0m[0m
+[0m[4mD:\Kuliah (PENS)\MAGANG\Source Code\Music\spotify-clone\src\components\EditPlaylistModal.jsx[24m[0m
+[0m  [2m18:17[22m  [33mwarning[39m  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')[0m
+[0m  [2m20:17[22m  [33mwarning[39m  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')[0m
+[0m[0m
+[0m[4mD:\Kuliah (PENS)\MAGANG\Source Code\Music\spotify-clone\src\pages\Profile.jsx[24m[0m
+[0m  [2m10:41[22m  [31merror[39m  'togglePlay' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u   [2mno-unused-vars[22m[0m
+[0m  [2m10:53[22m  [31merror[39m  'currentSong' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m  [2m10:66[22m  [31merror[39m  'isPlaying' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[31m[1m✖ 5 problems (3 errors, 2 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[31m[1m  0 errors and 2 warnings potentially fixable with the `--fix` option.[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
