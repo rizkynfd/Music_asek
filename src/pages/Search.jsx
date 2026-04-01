@@ -89,37 +89,7 @@ export default function Search() {
     // Active genre name for header
     const activeGenre = genreParam ? genres.find(g => g.id === genreParam) : null;
 
-    const SongCard = ({ song }) => {
-        const isThisPlaying = currentSong?.id === song.id && isPlaying;
-        return (
-            <div
-                className={`music-card glass-panel ${currentSong?.id === song.id ? 'playing' : ''}`}
-                onClick={() => handlePlaySong({ stopPropagation: () => { } }, song)}
-                onContextMenu={(e) => handleContextMenu(e, song)}
-            >
-                <div className="card-image-wrapper" style={{ position: 'relative' }}>
-                    <img src={song.coverUrl} alt={song.title} className="card-image" />
-                    <button
-                        className="card-play-btn"
-                        onClick={(e) => handlePlaySong(e, song)}
-                        style={{
-                            position: 'absolute', bottom: '24px', right: '8px',
-                            background: 'var(--accent-color)', color: '#000',
-                            borderRadius: '50%', padding: '8px', display: 'flex',
-                            border: 'none', cursor: 'pointer',
-                            opacity: isThisPlaying ? 1 : (currentSong?.id === song.id ? 1 : 0),
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-                            transition: 'opacity 0.2s ease, transform 0.2s ease'
-                        }}
-                    >
-                        {isThisPlaying ? <PauseCircle size={24} weight="fill" /> : <PlayCircle size={24} weight="fill" />}
-                    </button>
-                </div>
-                <h4 className="card-title text-ellipsis">{song.title}</h4>
-                <p className="card-desc text-ellipsis">{song.artist}</p>
-            </div>
-        );
-    };
+
 
     return (
         <div className="search-view">
@@ -191,7 +161,38 @@ export default function Search() {
                 <section className="section" style={{ marginTop: '24px' }}>
                     {searchQuery && <div className="section-header" style={{ marginBottom: '12px' }}><h2><MusicNote style={{ marginRight: '8px' }} />Songs</h2></div>}
                     <div className="card-grid">
-                        {filteredSongs.map(song => <SongCard key={song.id} song={song} />)}
+                        {filteredSongs.map(song => {
+                            const isThisPlaying = currentSong?.id === song.id && isPlaying;
+                            return (
+                                <div
+                                    key={song.id}
+                                    className={`music-card glass-panel ${currentSong?.id === song.id ? 'playing' : ''}`}
+                                    onClick={() => handlePlaySong({ stopPropagation: () => { } }, song)}
+                                    onContextMenu={(e) => handleContextMenu(e, song)}
+                                >
+                                    <div className="card-image-wrapper" style={{ position: 'relative' }}>
+                                        <img src={song.coverUrl} alt={song.title} className="card-image" />
+                                        <button
+                                            className="card-play-btn"
+                                            onClick={(e) => handlePlaySong(e, song)}
+                                            style={{
+                                                position: 'absolute', bottom: '24px', right: '8px',
+                                                background: 'var(--accent-color)', color: '#000',
+                                                borderRadius: '50%', padding: '8px', display: 'flex',
+                                                border: 'none', cursor: 'pointer',
+                                                opacity: isThisPlaying ? 1 : (currentSong?.id === song.id ? 1 : 0),
+                                                boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+                                                transition: 'opacity 0.2s ease, transform 0.2s ease'
+                                            }}
+                                        >
+                                            {isThisPlaying ? <PauseCircle size={24} weight="fill" /> : <PlayCircle size={24} weight="fill" />}
+                                        </button>
+                                    </div>
+                                    <h4 className="card-title text-ellipsis">{song.title}</h4>
+                                    <p className="card-desc text-ellipsis">{song.artist}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )}
