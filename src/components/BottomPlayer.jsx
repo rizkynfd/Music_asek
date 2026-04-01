@@ -3,7 +3,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import {
     PlayCircle, PauseCircle, SkipBack, SkipForward,
     Shuffle, Repeat, RepeatOnce, Queue, Desktop, SpeakerHigh,
-    ArrowsOutSimple, MicrophoneStage, Heart
+    ArrowsOutSimple, MicrophoneStage, Heart, CaretDown
 } from 'phosphor-react';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -27,6 +27,7 @@ export default function BottomPlayer() {
     const [isCrossfading, setIsCrossfading] = useState(false);
     const [isDraggingProgress, setIsDraggingProgress] = useState(false);
     const [isDraggingVolume, setIsDraggingVolume] = useState(false);
+    const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const crossfadeTime = 5; // 5 seconds crossfade
 
     const navigate = useNavigate();
@@ -338,8 +339,29 @@ export default function BottomPlayer() {
     const currentPercent = duration ? (currentTime / duration) * 100 : 0;
     const volumePercent = volume * 100;
 
+    const toggleExpand = (e) => {
+        if (window.innerWidth <= 768 && !isMobileExpanded) {
+            if (!e.target.closest('.control-btn') && !e.target.closest('.player-progress-bar')) {
+                setIsMobileExpanded(true);
+            }
+        }
+    };
+
     return (
-        <div className="bottom-player glass-panel">
+        <div 
+            className={`bottom-player glass-panel ${isMobileExpanded ? 'mobile-expanded' : ''}`}
+            onClick={toggleExpand}
+        >
+            {isMobileExpanded && (
+                <div className="mobile-player-header">
+                    <button className="collapse-btn" onClick={(e) => { e.stopPropagation(); setIsMobileExpanded(false); }}>
+                        <CaretDown size={32} weight="bold" />
+                    </button>
+                    <span className="now-playing-text" style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Now Playing</span>
+                    <div style={{ width: 32 }}></div>
+                </div>
+            )}
+
             {/* Primary Audio */}
             <audio
                 ref={audioRef}
