@@ -2026,12 +2026,26 @@
 }
 
 @media (max-width: 1024px) {
-  /* Tablet */
+  /* ── Tablet: Hide right sidebar, show cinema modal fullscreen ── */
   .right-sidebar {
     display: none !important;
   }
+
+  /* Cinema modal: take full screen on tablet */
+  .cinema-modal-video {
+    max-width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  /* Settings: Last.fm section stacks vertically */
+  .settings-lastfm-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
 }
 
+/* ── 768px and below: Mobile ── */
 @media (max-width: 768px) {
   /* Mobile */
   
@@ -2292,5 +2306,121 @@
   }
   .mobile-expanded .volume-control {
     display: none; /* Keep volume hidden on mobile */
+  }
+
+  /* ── Framer Motion page wrapper: fill height on mobile ── */
+  [style*="height: 100%"] > div[style*="height: 100%"] {
+    height: 100% !important;
+  }
+
+  /* ── Cinema modal: full-screen on mobile ── */
+  .cinema-modal-inner {
+    padding: 12px 8px !important;
+  }
+  .cinema-modal-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 4px 12px !important;
+  }
+  .cinema-modal-header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  .cinema-modal-toggle {
+    flex: 1 !important;
+  }
+  .cinema-modal-toggle button {
+    flex: 1 !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+  }
+
+  /* ── Settings Last.fm section ── */
+  .settings-section {
+    padding: 16px !important;
+  }
+  .settings-view {
+    padding: 16px 12px 48px !important;
+  }
+  .settings-account-row {
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+  .settings-btn-primary,
+  .settings-btn-secondary,
+  .settings-btn-danger {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* ── LyricsView: smaller font on mobile ── */
+  .lyric-line {
+    font-size: 22px !important;
+    gap: 14px !important;
+  }
+  .lyric-line.active {
+    font-size: 26px !important;
+    transform: scale(1.02) !important;
+  }
+  .lyrics-view {
+    padding: 24px 16px 60px !important;
+  }
+}
+
+/* ── 480px: Small phones ── */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  /* Lyrics even smaller */
+  .lyric-line {
+    font-size: 18px !important;
+  }
+  .lyric-line.active {
+    font-size: 22px !important;
+  }
+
+  /* Cinema modal toggle: icon only */
+  .cinema-toggle-label {
+    display: none;
+  }
+
+  /* Settings: reduce header size */
+  .settings-header h1 {
+    font-size: 26px !important;
+  }
+  .settings-section-title {
+    font-size: 15px !important;
+  }
+
+  /* RightSidebar video audio indicator badge */
+  .video-audio-badge {
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Keyboard shortcuts table: stack columns */
+  .shortcuts-table th:first-child,
+  .shortcuts-table td:first-child {
+    width: 90px;
+  }
+}
+
+/* ── Tablet landscape (1024px-1280px): Show collapsed right sidebar ── */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .right-sidebar {
+    min-width: 260px !important;
+    width: 260px !important;
+  }
+
+  .vinyl-wrapper {
+    max-width: 180px !important;
+  }
+
+  .now-playing-info h2 {
+    font-size: 18px !important;
   }
 }

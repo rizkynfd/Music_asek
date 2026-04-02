@@ -8,6 +8,7 @@ import {
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { sendNowPlaying, scrobbleTrack } from '../services/lastfmScrobble';
+import { fetchSyncedLyrics } from '../services/lrclib';
 
 export default function BottomPlayer() {
     const {
@@ -31,6 +32,7 @@ export default function BottomPlayer() {
     const [isDraggingProgress, setIsDraggingProgress] = useState(false);
     const [isDraggingVolume, setIsDraggingVolume] = useState(false);
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+    const [mobileLyrics, setMobileLyrics] = useState([]);
     const crossfadeTime = 5;
 
     // Mute the main audio when video audio mode is active
@@ -127,6 +129,13 @@ export default function BottomPlayer() {
     // ── Last.fm: Now Playing + Scrobble ──
     const scrobbledRef = React.useRef(false);
     const songStartTimeRef = React.useRef(null);
+
+    // ── Mobile Lyrics Fetch ──
+    useEffect(() => {
+        if (!currentSong) return;
+        fetchSyncedLyrics({ title: currentSong.title, artist: currentSong.artist, album: currentSong.album, duration: currentSong.duration })
+            .then(r => setMobileLyrics(r?.lines || []));
+    }, [currentSong?.id]);
 
     useEffect(() => {
         scrobbledRef.current = false;
@@ -373,21 +382,147 @@ export default function BottomPlayer() {
         }
     };
 
+    const mobileActiveLyricIdx = mobileLyrics.reduce((acc, l, i) => currentTime >= l.time ? i : acc, -1);
+    const mobileActiveLyric = mobileLyrics[mobileActiveLyricIdx]?.text || '';
+    const mobileNextLyric   = mobileLyrics[mobileActiveLyricIdx + 1]?.text || '';
+
     return (
-        <div 
+        <>
+        {/* ── Spotify-style Mobile Expanded Player ── */}
+        {isMobileExpanded && (
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 10002,
+                display: 'flex', flexDirection: 'column',
+                overflowY: 'auto',
+                background: '#0a0a0f',
+            }}>
+                {/* Blurred album background */}
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 0,
+                    backgroundImage: `url(${currentSong.coverUrl})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center',
+                    filter: 'blur(60px) brightness(0.25) saturate(1.5)',
+                    transform: 'scale(1.1)',
+                    transition: 'background-image 0.8s ease',
+                }} />
+
+                {/* Scrollable content on top of blur bg */}
+                <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '52px 20px 16px' }}>
+                        <button onClick={() => setIsMobileExpanded(false)}
+                            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <CaretDown size={28} weight="bold" />
+                        </button>
+                        <div style={{ textAlign: 'center' }}>
+                            <p style={{ margin: 0, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)' }}>Now Playing</p>
+                            <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: '#fff' }}>{currentSong.album || currentSong.title}</p>
+                        </div>
+                        <div style={{ width: 28 }} />
+                    </div>
+
+                    {/* Album Art */}
+                    <div style={{ padding: '8px 32px 24px', display: 'flex', justifyContent: 'center' }}>
+                        <div style={{
+                            width: '100%', maxWidth: '320px', aspectRatio: '1/1',
+                            borderRadius: '12px', overflow: 'hidden',
+                            boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+                        }}>
+                            <img src={currentSong.coverUrl} alt="Cover"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                    </div>
+
+                    {/* Song info + Like */}
+                    <div style={{ padding: '0 24px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ maxWidth: '80%' }}>
+                            <p style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#fff' }}>{currentSong.title}</p>
+                            <p style={{ margin: '4px 0 0', fontSize: '15px', color: 'rgba(255,255,255,0.5)' }}>{currentSong.artist}</p>
+                        </div>
+                        <button onClick={() => toggleLikedSong(currentSong.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer',
+                                color: likedSongs.includes(currentSong.id) ? 'var(--accent-color)' : 'rgba(255,255,255,0.4)' }}>
+                            <Heart size={28} weight={likedSongs.includes(currentSong.id) ? 'fill' : 'regular'} />
+                        </button>
+                    </div>
+
+                    {/* Lyrics preview */}
+                    {mobileActiveLyric && (
+                        <div onClick={() => { setIsMobileExpanded(false); navigate('/lyrics'); }}
+                            style={{
+                                margin: '0 16px 16px', padding: '16px 20px',
+                                borderRadius: '16px', cursor: 'pointer',
+                                background: 'rgba(255,255,255,0.06)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                            }}>
+                            <p style={{ margin: '0 0 4px', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Lyrics</p>
+                            <p style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: '#fff', lineHeight: 1.5 }}>{mobileActiveLyric}</p>
+                            {mobileNextLyric && <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{mobileNextLyric}</p>}
+                        </div>
+                    )}
+
+                    {/* Progress bar */}
+                    <div style={{ padding: '0 24px 8px' }}>
+                        <div className="progress-bg" ref={progressBarRef} onMouseDown={handleProgressMouseDown}
+                            style={{ position: 'relative', marginBottom: '8px', height: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.15)', cursor: 'pointer' }}>
+                            <div className="progress-fill" style={{ width: `${currentPercent}%`, height: '100%', borderRadius: '4px', background: '#fff' }} />
+                            <div className="progress-handle" style={{ left: `${currentPercent}%`, background: '#fff' }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{formatTime(currentTime)}</span>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{formatTime(duration)}</span>
+                        </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div style={{ padding: '8px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <button className={`control-btn ${isShuffle ? 'active-btn' : ''}`} onClick={toggleShuffle}><Shuffle size={22} /></button>
+                        <button className="control-btn" onClick={handleSkipBack}><SkipBack size={28} weight="fill" /></button>
+                        <button className="control-btn play-btn" onClick={togglePlay} style={{ transform: 'scale(1.3)' }}>
+                            {isPlaying ? <PauseCircle size={60} weight="fill" /> : <PlayCircle size={60} weight="fill" />}
+                        </button>
+                        <button className="control-btn" onClick={handleSkipForward}><SkipForward size={28} weight="fill" /></button>
+                        <button className={`control-btn ${repeatMode !== 'off' ? 'active-btn' : ''}`} onClick={toggleRepeat}>
+                            {repeatMode === 'one' ? <RepeatOnce size={22} /> : <Repeat size={22} />}
+                        </button>
+                    </div>
+
+                    {/* Action bar */}
+                    <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <button onClick={() => { setIsMobileExpanded(false); setIsVideoAudioMode(true); }}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '20px', padding: '8px 16px', cursor: 'pointer',
+                                color: '#fff', fontSize: '13px', fontWeight: '600'
+                            }}>
+                            🎬 Beralih ke Video
+                        </button>
+                        <button onClick={() => { setIsMobileExpanded(false); navigate('/queue'); }}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                            <Queue size={22} />
+                        </button>
+                    </div>
+
+                    {/* About Artist */}
+                    {currentSong.desc && (
+                        <div style={{ margin: '0 16px 16px', padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <p style={{ margin: '0 0 8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.35)' }}>Tentang Artis</p>
+                            <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>{currentSong.desc}</p>
+                        </div>
+                    )}
+
+                    <div style={{ height: 40 }} />
+                </div>
+            </div>
+        )}
+
+        <div
             className={`bottom-player glass-panel ${isMobileExpanded ? 'mobile-expanded' : ''}`}
             onClick={toggleExpand}
         >
-            {isMobileExpanded && (
-                <div className="mobile-player-header">
-                    <button className="collapse-btn" onClick={(e) => { e.stopPropagation(); setIsMobileExpanded(false); }}>
-                        <CaretDown size={32} weight="bold" />
-                    </button>
-                    <span className="now-playing-text" style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Now Playing</span>
-                    <div style={{ width: 32 }}></div>
-                </div>
-            )}
-
+            {/* Always render audio elements - not inside expanded UI */}
             {/* Primary Audio */}
             <audio
                 ref={audioRef}
@@ -552,5 +687,6 @@ export default function BottomPlayer() {
                 }
             `}</style>
         </div>
+        </>
     );
 }
