@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetchSyncedLyrics } from '../services/lrclib';
-import { MusicNote, MonitorPlay, TextT } from 'phosphor-react';
-import BackgroundVideo from '../components/BackgroundVideo';
+import { MusicNote } from 'phosphor-react';
 
 export default function LyricsView() {
     const { currentSong, currentTime } = usePlayerStore();
-    const [isVideoMode, setIsVideoMode] = useState(false);
     const lyricsContainerRef = useRef(null);
     const lyricsRefs = useRef([]);
 
@@ -100,29 +98,8 @@ export default function LyricsView() {
 
     /* ── Lyrics View ── */
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
-            <BackgroundVideo opacity={isVideoMode ? 1 : 0.25} blur={isVideoMode ? '0px' : '40px'} isSharp={isVideoMode} />
-            
-            <div className={`lyrics-view ${isVideoMode ? 'mode-video' : ''}`} ref={lyricsContainerRef}>
-                {/* Mode Toggle */}
-                <div style={{ position: 'absolute', top: '24px', right: '32px', zIndex: 10, display: 'flex', gap: '8px' }}>
-                    <button 
-                        onClick={() => setIsVideoMode(false)}
-                        style={{ padding: '8px', borderRadius: '50%', border: 'none', background: !isVideoMode ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', color: !isVideoMode ? '#000' : '#fff', cursor: 'pointer' }}
-                        title="Lyrics Focus"
-                    >
-                        <TextT size={20} weight="bold" />
-                    </button>
-                    <button 
-                        onClick={() => setIsVideoMode(true)}
-                        style={{ padding: '8px', borderRadius: '50%', border: 'none', background: isVideoMode ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', color: isVideoMode ? '#000' : '#fff', cursor: 'pointer' }}
-                        title="Video Focus"
-                    >
-                        <MonitorPlay size={20} weight="bold" />
-                    </button>
-                </div>
-
-                {/* Source badge */}
+        <div className="lyrics-view" ref={lyricsContainerRef}>
+            {/* Source badge */}
             <div className="lv-badge">
                 {source === 'lrclib' && '🎵 Synced via LRCLIB'}
                 {source === 'plain'  && '📄 Plain lyrics via LRCLIB'}
@@ -222,30 +199,7 @@ export default function LyricsView() {
                 @media (max-width: 768px) {
                     .lyric-line { font-size: 20px; }
                 }
-
-                /* Video Mode Overrides */
-                .mode-video {
-                    mask-image: none !important;
-                    -webkit-mask-image: none !important;
-                    background: rgba(0,0,0,0.4);
-                }
-                .mode-video .lyrics-content {
-                    max-width: 100%;
-                    padding-bottom: 20vh;
-                    justify-content: flex-end;
-                    height: 100%;
-                }
-                .mode-video .lyric-line {
-                    font-size: 22px;
-                    text-align: center;
-                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
-                }
-                .mode-video .lyric-line.active {
-                    transform: scale(1.1);
-                    color: var(--accent-color);
-                }
             `}</style>
-            </div>
         </div>
     );
 }

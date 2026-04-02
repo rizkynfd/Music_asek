@@ -7,7 +7,6 @@ import {
 } from 'phosphor-react';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import Visualizer from './Visualizer';
 
 export default function BottomPlayer() {
     const {
@@ -19,7 +18,8 @@ export default function BottomPlayer() {
         toggleShuffle,
         toggleRepeat,
         likedSongs,
-        toggleLikedSong
+        toggleLikedSong,
+        isVideoAudioMode, setIsVideoAudioMode
     } = usePlayerStore();
 
     const audioRef = useRef(null);
@@ -29,7 +29,13 @@ export default function BottomPlayer() {
     const [isDraggingProgress, setIsDraggingProgress] = useState(false);
     const [isDraggingVolume, setIsDraggingVolume] = useState(false);
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
-    const crossfadeTime = 5; // 5 seconds crossfade
+    const crossfadeTime = 5;
+
+    // Mute the main audio when video audio mode is active
+    useEffect(() => {
+        if (!audioRef.current) return;
+        audioRef.current.muted = isVideoAudioMode;
+    }, [isVideoAudioMode]);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -56,7 +62,6 @@ export default function BottomPlayer() {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 audioCtxRef.current = new AudioCtx();
                 
-                // Compressor normalizes the audio dynamically
                 compressorRef.current = audioCtxRef.current.createDynamicsCompressor();
                 compressorRef.current.threshold.value = -24;
                 compressorRef.current.knee.value = 30;
@@ -64,20 +69,11 @@ export default function BottomPlayer() {
                 compressorRef.current.attack.value = 0.003;
                 compressorRef.current.release.value = 0.25;
 
-                // Gain handles volume since MediaElement volume is overridden
                 gainNodeRef.current = audioCtxRef.current.createGain();
                 gainNodeRef.current.gain.value = audioRef.current.volume || 1;
                 
                 primarySourceRef.current = audioCtxRef.current.createMediaElementSource(audioRef.current);
-                
-                // Audio analyser for visualizer
-                const newAnalyser = audioCtxRef.current.createAnalyser();
-                newAnalyser.fftSize = 128;
-                newAnalyser.smoothingTimeConstant = 0.75;
-                usePlayerStore.getState().setAnalyser(newAnalyser);
-                
-                primarySourceRef.current.connect(newAnalyser);
-                newAnalyser.connect(compressorRef.current);
+                primarySourceRef.current.connect(compressorRef.current);
                 compressorRef.current.connect(gainNodeRef.current);
                 gainNodeRef.current.connect(audioCtxRef.current.destination);
             } catch (err) {
@@ -374,6 +370,7 @@ export default function BottomPlayer() {
             <audio
                 ref={audioRef}
                 src={currentSong.audioUrl}
+                crossOrigin="anonymous"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={handleEnded}
@@ -384,6 +381,7 @@ export default function BottomPlayer() {
                 <audio
                     ref={nextAudioRef}
                     src={nextSong.audioUrl}
+                    crossOrigin="anonymous"
                     preload="auto"
                     muted // Just for pre-caching
                 />
@@ -427,9 +425,6 @@ export default function BottomPlayer() {
 
             {/* 2. Main Controls (Center) */}
             <div className="player-center">
-                <div style={{ height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', marginBottom: '4px' }}>
-                    <Visualizer width={200} height={20} />
-                </div>
                 <div className="player-controls">
                     <button className={`control-btn ${isShuffle ? 'active-btn' : ''}`} onClick={toggleShuffle}>
                         <Shuffle size={20} />

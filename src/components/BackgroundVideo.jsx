@@ -6,6 +6,7 @@ export default function BackgroundVideo({
     opacity = 0.15, 
     blur = '20px', 
     isSharp = false,
+    unmuted = false,
     className = ""
 }) {
     const { currentSong, isPlaying } = usePlayerStore();
@@ -14,8 +15,10 @@ export default function BackgroundVideo({
     useEffect(() => {
         let isMounted = true;
         
+        // Reset immediately so old video doesn't flash
+        setVideoId(null);
+
         if (!currentSong) {
-            setVideoId(null);
             return;
         }
 
@@ -80,7 +83,7 @@ export default function BackgroundVideo({
     return (
         <div style={containerStyle} className={className}>
             <iframe
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${videoId}&modestbranding=1&playsinline=1`}
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${unmuted ? 0 : 1}&controls=${unmuted ? 1 : 0}&showinfo=0&rel=0&loop=1&playlist=${videoId}&modestbranding=1&playsinline=1`}
                 allow="autoplay; encrypted-media"
                 style={{
                     width: isSharp ? '100%' : '100vw',
@@ -93,7 +96,7 @@ export default function BackgroundVideo({
                     transform: 'translate(-50%, -50%)',
                     objectFit: 'cover',
                     border: 'none',
-                    pointerEvents: 'none'
+                    pointerEvents: unmuted ? 'auto' : 'none'
                 }}
                 title="Background Video"
             />

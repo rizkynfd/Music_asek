@@ -3,71 +3,88 @@ import { usePlayerStore } from '../store/usePlayerStore';
 
 export default function Visualizer({ 
     width = 200, 
-    height = 60, 
-    activeColor = 'var(--accent-color)', 
-    idleColor = 'rgba(255,255,255,0.1)' 
+    height = 32,
 }) {
     const canvasRef = useRef(null);
     const { analyser, isPlaying } = usePlayerStore();
     const animationRef = useRef(null);
+    const frameCountRef = useRef(0);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        let dataArray;
+        const BAR_COUNT = 42;
+        const BAR_GAP = 2;
+        const barWidth = (width - BAR_GAP * (BAR_COUNT - 1)) / BAR_COUNT;
 
+        let dataArray;
         if (analyser) {
-            // Buffer size = half of fftSize
-            const bufferLength = analyser.frequencyBinCount;
-            dataArray = new Uint8Array(bufferLength);
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
 
         const draw = () => {
             animationRef.current = requestAnimationFrame(draw);
+            frameCountRef.current++;
 
             ctx.clearRect(0, 0, width, height);
 
-            if (!analyser || (!isPlaying && dataArray && dataArray.every(val => val === 0))) {
-                // Draw idle flat line if no analyser or music stopped and bars dropped
-                ctx.fillStyle = idleColor;
-                ctx.fillRect(0, height / 2 - 1, width, 2);
-                return;
-            }
+            if (analyser && isPlaying && dataArray) {
+                // ── Live mode: real frequency data ──
+                analyser.getByteFrequencyData(dataArray);
 
-            analyser.getByteFrequencyData(dataArray);
+                for (let i = 0; i < BAR_COUNT; i++) {
+                    // Sample across lower 65% of freq bins (bass + mid)
+                    const dataIndex = Math.floor((i / BAR_COUNT) * (dataArray.length * 0.65));
+                    const rawValue = dataArray[dataIndex];
 
-            const barCount = dataArray.length / 2;
-            const barWidth = (width / barCount) - 2;
-            let x = 0;
+                    // Power curve to boost sensitivity for quieter signals
+                    const normalized = Math.pow(rawValue / 255, 0.75);
+                    const barH = Math.max(3, normalized * height);
 
-            for (let i = 0; i < barCount; i++) {
-                const barHeight = (dataArray[i] / 255) * height;
+                    const x = i * (barWidth + BAR_GAP);
+                    const y = (height - barH) / 2;
 
-                // Create a neon gradient
-                const gradient = ctx.createLinearGradient(0, height, 0, 0);
-                gradient.addColorStop(0, '#1DB954'); // Spotify green
-                gradient.addColorStop(0.5, '#1ed760');
-                gradient.addColorStop(1, '#60efff'); // Cyan top
+                    const gradient = ctx.createLinearGradient(0, height, 0, 0);
+                    gradient.addColorStop(0, 'rgba(29, 185, 84, 0.9)');
+                    gradient.addColorStop(0.5, 'rgba(30, 215, 96, 1)');
+                    gradient.addColorStop(1, 'rgba(96, 239, 255, 0.9)');
 
-                ctx.fillStyle = gradient;
-                
-                const y = (height - barHeight) / 2;
-                
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'rgba(30, 215, 96, 0.5)';
+                    ctx.shadowBlur = barH > 8 ? 10 : 0;
+                    ctx.shadowColor = 'rgba(30, 215, 96, 0.5)';
+                    ctx.fillStyle = gradient;
 
-                // Draw rounded rectangle
-                ctx.beginPath();
-                if (ctx.roundRect) {
-                    ctx.roundRect(x, y, barWidth, Math.max(2, barHeight), 2);
-                } else {
-                    ctx.rect(x, y, barWidth, Math.max(2, barHeight));
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(x, y, barWidth, barH, 2);
+                    } else {
+                        ctx.rect(x, y, barWidth, barH);
+                    }
+                    ctx.fill();
                 }
-                ctx.fill();
+            } else {
+                // ── Idle mode: gentle sine-wave pulse animation ──
+                const t = frameCountRef.current * 0.02;
+                ctx.shadowBlur = 0;
 
-                x += barWidth + 2;
+                for (let i = 0; i < BAR_COUNT; i++) {
+                    const phase = (i / BAR_COUNT) * Math.PI * 2;
+                    const sinVal = (Math.sin(t + phase) + 1) / 2; // 0..1
+                    const barH = 2 + sinVal * (height * 0.3);
+
+                    const x = i * (barWidth + BAR_GAP);
+                    const y = (height - barH) / 2;
+
+                    ctx.fillStyle = `rgba(30, 215, 96, ${0.12 + sinVal * 0.18})`;
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(x, y, barWidth, barH, 1);
+                    } else {
+                        ctx.rect(x, y, barWidth, barH);
+                    }
+                    ctx.fill();
+                }
             }
         };
 
@@ -76,7 +93,7 @@ export default function Visualizer({
         return () => {
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
         };
-    }, [analyser, isPlaying, width, height, activeColor, idleColor]);
+    }, [analyser, isPlaying, width, height]);
 
     return (
         <canvas 

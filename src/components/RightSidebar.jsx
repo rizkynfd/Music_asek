@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { CheckCircle, XCircle } from 'phosphor-react';
+import { CheckCircle, XCircle, ArrowsOutSimple } from 'phosphor-react';
 import { fetchSyncedLyrics } from '../services/lrclib';
 import { useNavigate } from 'react-router-dom';
 import BackgroundVideo from './BackgroundVideo';
 
 export default function RightSidebar() {
-    const { currentSong, isRightSidebarOpen, isPlaying, currentTime } = usePlayerStore();
+    const { currentSong, isRightSidebarOpen, isPlaying, currentTime, isVideoAudioMode, setIsVideoAudioMode } = usePlayerStore();
     const navigate = useNavigate();
 
     const [lyrics, setLyrics] = useState([]);
+    const [isVideoFullscreen, setIsVideoFullscreen] = useState(false);
 
     const fetchLyrics = useCallback(async (song) => {
         if (!song) { setLyrics([]); return; }
@@ -69,14 +70,139 @@ export default function RightSidebar() {
 
             {/* Video Clip Section */}
             <div className="rs-video-section">
+                {/* Header row: label + Audio/Video pill toggle */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <p className="rs-lyrics-label" style={{ margin: 0 }}>Official Video</p>
-                    <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>PREVIEW</span>
+                    {/* Audio / Video toggle pill */}
+                    <div style={{
+                        display: 'flex', gap: '2px',
+                        background: 'rgba(255,255,255,0.06)',
+                        borderRadius: '20px',
+                        padding: '2px',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                    }}>
+                        <button
+                            onClick={() => setIsVideoAudioMode(false)}
+                            style={{
+                                padding: '3px 10px', borderRadius: '18px', border: 'none',
+                                fontSize: '10px', fontWeight: '700', cursor: 'pointer',
+                                background: !isVideoAudioMode ? 'var(--accent-color)' : 'transparent',
+                                color: !isVideoAudioMode ? '#000' : 'var(--text-secondary)',
+                                transition: 'all 0.2s'
+                            }}
+                        >🎵 Audio</button>
+                        <button
+                            onClick={() => setIsVideoAudioMode(true)}
+                            style={{
+                                padding: '3px 10px', borderRadius: '18px', border: 'none',
+                                fontSize: '10px', fontWeight: '700', cursor: 'pointer',
+                                background: isVideoAudioMode ? '#e040fb' : 'transparent',
+                                color: isVideoAudioMode ? '#fff' : 'var(--text-secondary)',
+                                transition: 'all 0.2s'
+                            }}
+                        >🎬 Video</button>
+                    </div>
                 </div>
+
                 <div className="rs-video-container">
                     <BackgroundVideo isSharp={true} />
+                    {/* Fullscreen expand button */}
+                    <button
+                        onClick={() => setIsVideoFullscreen(true)}
+                        style={{
+                            position: 'absolute',
+                            top: '8px', right: '8px', zIndex: 10,
+                            background: 'rgba(0,0,0,0.6)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            borderRadius: '6px', color: '#fff',
+                            cursor: 'pointer', padding: '5px 7px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            backdropFilter: 'blur(4px)', transition: 'background 0.2s'
+                        }}
+                        title="Watch Fullscreen"
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,240,255,0.2)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+                    >
+                        <ArrowsOutSimple size={14} weight="bold" />
+                    </button>
+
+                    {/* Video audio mode active indicator */}
+                    {isVideoAudioMode && (
+                        <div style={{
+                            position: 'absolute', bottom: '8px', left: '8px', zIndex: 10,
+                            background: 'rgba(224,64,251,0.85)',
+                            borderRadius: '4px', padding: '2px 8px',
+                            fontSize: '9px', fontWeight: '800',
+                            letterSpacing: '0.5px', color: '#fff'
+                        }}>VIDEO AUDIO ON</div>
+                    )}
                 </div>
             </div>
+
+            {/* Fullscreen Cinema Modal */}
+            {isVideoFullscreen && (
+                <div
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 9999,
+                        background: 'rgba(0,0,0,0.97)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                    }}
+                    onClick={() => { setIsVideoFullscreen(false); setIsVideoAudioMode(false); }}
+                >
+                    {/* Header */}
+                    <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 12px 16px' }}>
+                        <div>
+                            <p style={{ fontSize: '22px', fontWeight: '800', margin: 0 }}>{currentSong.title}</p>
+                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>{currentSong.artist}</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {/* Audio / Video toggle in modal */}
+                            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '24px', padding: '4px' }}>
+                                <button
+                                    onClick={e => { e.stopPropagation(); setIsVideoAudioMode(false); }}
+                                    style={{
+                                        padding: '6px 16px', borderRadius: '20px', border: 'none',
+                                        fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+                                        background: !isVideoAudioMode ? 'var(--accent-color)' : 'transparent',
+                                        color: !isVideoAudioMode ? '#000' : 'var(--text-secondary)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >🎵 Audio Only</button>
+                                <button
+                                    onClick={e => { e.stopPropagation(); setIsVideoAudioMode(true); }}
+                                    style={{
+                                        padding: '6px 16px', borderRadius: '20px', border: 'none',
+                                        fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+                                        background: isVideoAudioMode ? '#e040fb' : 'transparent',
+                                        color: isVideoAudioMode ? '#fff' : 'var(--text-secondary)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >🎬 Play Video</button>
+                            </div>
+                            <button
+                                onClick={() => { setIsVideoFullscreen(false); setIsVideoAudioMode(false); }}
+                                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}
+                            >
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Video 16:9 */}
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: '100%', maxWidth: '1000px', aspectRatio: '16/9', position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000' }}
+                    >
+                        <BackgroundVideo isSharp={true} unmuted={isVideoAudioMode} />
+                    </div>
+
+                    {isVideoAudioMode && (
+                        <p style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(224,64,251,0.7)', fontWeight: '700' }}>🎬 Audio dari video — player website di-mute</p>
+                    )}
+                    <p style={{ marginTop: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>Klik di luar video untuk menutup</p>
+                </div>
+            )}
 
             {/* Lyrics Preview */}
             {hasLyrics && (

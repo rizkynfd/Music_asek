@@ -171,12 +171,14 @@ function PlayerLayout() {
         </div>
 
         {isRightSidebarOpen && (
-          <div 
-            className={`resize-handle right-handle ${isResizingRight ? 'active' : ''}`}
-            onMouseDown={() => setIsResizingRight(true)}
-          ></div>
+          <>
+            <div 
+              className={`resize-handle right-handle ${isResizingRight ? 'active' : ''}`}
+              onMouseDown={() => setIsResizingRight(true)}
+            ></div>
+            <RightSidebar />
+          </>
         )}
-        <RightSidebar />
       </div>
       <BottomPlayer />
       <MobileBottomNav />

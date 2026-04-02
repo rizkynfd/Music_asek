@@ -28,12 +28,12 @@ const normalizePlaylist = (p) => ({
 export const usePlayerStore = create(
     persist(
         (set, get) => ({
-            analyser: null,
-            setAnalyser: (analyser) => set({ analyser }),
             leftSidebarWidth: 280,
             setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
             rightSidebarWidth: 320,
             setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
+            isVideoAudioMode: false,
+            setIsVideoAudioMode: (val) => set({ isVideoAudioMode: val }),
             currentSong: null,
             isPlaying: false,
             volume: 0.5,
