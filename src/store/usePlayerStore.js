@@ -34,6 +34,14 @@ export const usePlayerStore = create(
             setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
             isVideoAudioMode: false,
             setIsVideoAudioMode: (val) => set({ isVideoAudioMode: val }),
+            // Last.fm scrobbling
+            lastfmSessionKey: null,
+            setLastfmSessionKey: (key) => set({ lastfmSessionKey: key }),
+            lastfmUser: null,
+            setLastfmUser: (user) => set({ lastfmUser: user }),
+            // Dynamic album colors
+            albumColors: { bg: '#121212', accent: '#1DB954', muted: 'rgba(255,255,255,0.08)' },
+            setAlbumColors: (colors) => set({ albumColors: colors }),
             currentSong: null,
             isPlaying: false,
             volume: 0.5,

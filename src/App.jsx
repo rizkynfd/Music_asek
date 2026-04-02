@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Topbar from './components/Topbar';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import BottomPlayer from './components/BottomPlayer';
 import MobileBottomNav from './components/MobileBottomNav';
 import ContextMenu from './components/ContextMenu';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import Library from './pages/Library';
@@ -26,6 +27,8 @@ import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { usePlayerStore } from './store/usePlayerStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAlbumColors } from './hooks/useAlbumColors';
+import { getLastfmSession, getLastfmUserInfo } from './services/lastfmScrobble';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuthStore } from './store/useAuthStore';
 import './App.css';
@@ -89,8 +92,41 @@ function PlayerLayout() {
     toast,
     leftSidebarWidth, setLeftSidebarWidth, 
     rightSidebarWidth, setRightSidebarWidth,
-    isRightSidebarOpen 
+    isRightSidebarOpen,
+    currentSong,
+    setAlbumColors,
+    lastfmSessionKey, setLastfmSessionKey, setLastfmUser,
   } = usePlayerStore();
+
+  const location = useLocation();
+
+  // ── Dynamic Album Colors via node-vibrant ──
+  const colors = useAlbumColors(currentSong?.coverUrl);
+  useEffect(() => {
+    setAlbumColors(colors);
+    document.documentElement.style.setProperty('--dynamic-bg', colors.bg);
+    document.documentElement.style.setProperty('--dynamic-accent', colors.accent);
+    document.documentElement.style.setProperty('--dynamic-muted', colors.muted);
+  }, [colors, setAlbumColors]);
+
+  // ── Last.fm: handle OAuth callback ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('lastfm_callback') === '1') {
+      const token = params.get('token');
+      if (token) {
+        getLastfmSession(token).then(async (sk) => {
+          if (sk) {
+            setLastfmSessionKey(sk);
+            const user = await getLastfmUserInfo(sk);
+            if (user) setLastfmUser(user);
+            window.history.replaceState({}, '', '/settings');
+          }
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
@@ -134,7 +170,7 @@ function PlayerLayout() {
   }, [isResizingLeft, isResizingRight, setLeftSidebarWidth, setRightSidebarWidth]);
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ background: `linear-gradient(180deg, ${colors.bg}55 0%, transparent 40%)` }}>
       <div className="main-wrapper" style={{ 
         '--left-sidebar-width': `${leftSidebarWidth}px`,
         '--right-sidebar-width': `${rightSidebarWidth}px`
@@ -149,23 +185,23 @@ function PlayerLayout() {
           <Topbar />
           <main className="main-view glass-panel scrollable">
             <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/playlist/liked-songs" element={<LikedSongs />} />
-                <Route path="/playlist/:id" element={<Playlist />} />
-                <Route path="/album/:albumName" element={<AlbumView />} />
-                <Route path="/artist/:artistName" element={<ArtistView />} />
-                <Route path="/queue" element={<Queue />} />
-                <Route path="/lyrics" element={<LyricsView />} />
-                <Route path="/recently-played" element={<RecentlyPlayed />} />
-                <Route path="/settings" element={<Settings />} />
-                {/* Protected Routes */}
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                {/* 404 — must be last */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
+                  <Route path="/search" element={<PageWrapper><Search /></PageWrapper>} />
+                  <Route path="/library" element={<PageWrapper><Library /></PageWrapper>} />
+                  <Route path="/playlist/liked-songs" element={<PageWrapper><LikedSongs /></PageWrapper>} />
+                  <Route path="/playlist/:id" element={<PageWrapper><Playlist /></PageWrapper>} />
+                  <Route path="/album/:albumName" element={<PageWrapper><AlbumView /></PageWrapper>} />
+                  <Route path="/artist/:artistName" element={<PageWrapper><ArtistView /></PageWrapper>} />
+                  <Route path="/queue" element={<PageWrapper><Queue /></PageWrapper>} />
+                  <Route path="/lyrics" element={<PageWrapper><LyricsView /></PageWrapper>} />
+                  <Route path="/recently-played" element={<PageWrapper><RecentlyPlayed /></PageWrapper>} />
+                  <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
+                  <Route path="/profile" element={<PageWrapper><ProtectedRoute><Profile /></ProtectedRoute></PageWrapper>} />
+                  <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
+                </Routes>
+              </AnimatePresence>
             </ErrorBoundary>
           </main>
         </div>
@@ -197,3 +233,18 @@ function PlayerLayout() {
 }
 
 export default App;
+
+/** Framer Motion page transition wrapper */
+function PageWrapper({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      style={{ height: '100%' }}
+    >
+      {children}
+    </motion.div>
+  );
+}

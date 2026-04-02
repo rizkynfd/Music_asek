@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Gear, Keyboard, SpeakerHigh, User, SignOut, Info } from 'phosphor-react';
+import { Gear, Keyboard, SpeakerHigh, User, SignOut, Info, LinkSimple, CheckCircle } from 'phosphor-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { startLastfmAuth } from '../services/lastfmScrobble';
 
 const SHORTCUTS = [
     { keys: ['Space'], description: 'Play / Pause' },
@@ -15,7 +16,7 @@ const SHORTCUTS = [
 export default function Settings() {
     const navigate = useNavigate();
     const { currentUser, isAuthenticated, logout } = useAuthStore();
-    const { volume, setVolume } = usePlayerStore();
+    const { volume, setVolume, lastfmSessionKey, setLastfmSessionKey, lastfmUser, setLastfmUser } = usePlayerStore();
     const [crossfade, setCrossfade] = useState(5);
 
     const handleLogout = () => {
@@ -64,7 +65,52 @@ export default function Settings() {
                 )}
             </section>
 
-            {/* Audio Settings Section */}
+            {/* Last.fm Scrobbling Section */}
+            <section className="settings-section glass-panel">
+                <h2 className="settings-section-title"><LinkSimple size={20} /> Last.fm Scrobbling</h2>
+
+                {lastfmSessionKey ? (
+                    <div className="settings-account-row">
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #d51007, #a90000)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎵</div>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ fontWeight: 700, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <CheckCircle size={16} color="#1DB954" weight="fill" />
+                                {lastfmUser?.name || 'Connected'}
+                            </p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+                                {lastfmUser?.playcount ? `${parseInt(lastfmUser.playcount).toLocaleString()} scrobbles total` : 'Scrobbling active — songs will be tracked on your Last.fm profile'}
+                            </p>
+                        </div>
+                        <button
+                            className="settings-btn-danger"
+                            onClick={() => { setLastfmSessionKey(null); setLastfmUser(null); }}
+                        >
+                            <SignOut size={16} /> Disconnect
+                        </button>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                        <div>
+                            <p style={{ margin: '0 0 4px', fontWeight: 600 }}>Connect your Last.fm account</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>Automatically scrobble songs you listen to on your Last.fm profile.</p>
+                        </div>
+                        <button
+                            className="settings-btn-primary"
+                            style={{ background: '#d51007', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}
+                            onClick={startLastfmAuth}
+                        >
+                            <LinkSimple size={16} /> Connect Last.fm
+                        </button>
+                    </div>
+                )}
+
+                <div className="settings-note" style={{ marginTop: lastfmSessionKey ? 16 : 0 }}>
+                    <Info size={14} />
+                    Scrobbles are sent after 30 seconds or 50% of song duration — whichever comes first.
+                    {!import.meta.env.VITE_LASTFM_API_SECRET && ' ⚠️ Add VITE_LASTFM_API_SECRET to your .env to enable scrobbling.'}
+                </div>
+            </section>
+
             <section className="settings-section glass-panel">
                 <h2 className="settings-section-title"><SpeakerHigh size={20} /> Audio Settings</h2>
 

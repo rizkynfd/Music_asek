@@ -7,6 +7,7 @@ import {
 } from 'phosphor-react';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { sendNowPlaying, scrobbleTrack } from '../services/lastfmScrobble';
 
 export default function BottomPlayer() {
     const {
@@ -19,7 +20,8 @@ export default function BottomPlayer() {
         toggleRepeat,
         likedSongs,
         toggleLikedSong,
-        isVideoAudioMode, setIsVideoAudioMode
+        isVideoAudioMode, setIsVideoAudioMode,
+        lastfmSessionKey,
     } = usePlayerStore();
 
     const audioRef = useRef(null);
@@ -121,6 +123,26 @@ export default function BottomPlayer() {
             gainNodeRef.current.gain.value = volume;
         }
     }, [volume, currentSong?.id]);
+
+    // ── Last.fm: Now Playing + Scrobble ──
+    const scrobbledRef = React.useRef(false);
+    const songStartTimeRef = React.useRef(null);
+
+    useEffect(() => {
+        scrobbledRef.current = false;
+        songStartTimeRef.current = Math.floor(Date.now() / 1000);
+        if (!lastfmSessionKey || !currentSong) return;
+        sendNowPlaying(lastfmSessionKey, currentSong);
+    }, [currentSong?.id, lastfmSessionKey]);
+
+    useEffect(() => {
+        if (!lastfmSessionKey || !currentSong || scrobbledRef.current) return;
+        const threshold = Math.min(30, duration * 0.5);
+        if (currentTime >= threshold && threshold > 0) {
+            scrobbledRef.current = true;
+            scrobbleTrack(lastfmSessionKey, currentSong, songStartTimeRef.current);
+        }
+    }, [currentTime, duration, currentSong, lastfmSessionKey]);
 
     // Global drag listeners
     useEffect(() => {
